@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Convite Animado - Chá da Eliza</title>
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts for High-End Typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Great+Vibes&family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --gold-light: #F3E5C8;
+            --gold-mid: #C5A059;
+            --gold-dark: #8C6D2D;
+            --rose-bg: #FAF3F0;
+            --rose-pink: #F4A8B6;
+            --rose-deep: #E87EA1;
+            --text-dark: #4A3E3D;
+        }
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background: radial-gradient(circle at center, #FFFDFB 0%, #F5EAE6 100%);
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            width: 100vw;
+            height: 100vh;
+            height: 100dvh;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+        }
+
+        .font-serif-title { font-family: 'Cormorant Garamond', serif; }
+        .font-script { font-family: 'Great Vibes', cursive; }
+
+        /* Canvas background overlay */
+        #bg-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        /* 3D Envelope Container */
+        .envelope-wrapper {
+            perspective: 1000px;
+            z-index: 10;
+        }
+
+        .envelope {
+            position: relative;
+            width: 310px;
+            height: 210px;
+            background: #F1E4DD;
+            border-radius: 16px;
+            box-shadow: 0 20px 45px rgba(138, 103, 87, 0.22), 0 4px 10px rgba(0,0,0,0.05);
+            transform-style: preserve-3d;
+            transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+        }
+
+        @media (min-width: 480px) {
+            .envelope {
+                width: 380px;
+                height: 250px;
+            }
+        }
+
+        .envelope-flap {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            clip-path: polygon(0 0, 100% 0, 50% 55%);
+            background: linear-gradient(180deg, #E7D5CB 0%, #DAC3B7 100%);
+            transform-origin: top center;
+            transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 5;
+            border-top-left-radius: 16px;
+            border-top-right-radius: 16px;
+        }
+
+        .envelope.open .envelope-flap {
+            transform: rotateX(180deg);
+            z-index: 1;
+        }
+
+        .envelope-pocket {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            clip-path: polygon(0 100%, 100% 100%, 100% 35%, 50% 60%, 0 35%);
+            background: linear-gradient(0deg, #EDDCD3 0%, #F6EBE5 100%);
+            border-bottom-left-radius: 16px;
+            border-bottom-right-radius: 16px;
+            z-index: 4;
+        }
+
+        /* Wax Seal */
+        .wax-seal {
+            position: absolute;
+            top: 52%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(1);
+            width: 62px;
+            height: 62px;
+            background: radial-gradient(circle at 30% 30%, #F4A8B6 0%, #E87EA1 60%, #C44569 100%);
+            border-radius: 50%;
+            box-shadow: 0 8px 20px rgba(196, 69, 105, 0.4), inset 0 2px 4px rgba(255, 255, 255, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 6;
+            transition: all 0.5s ease;
+            border: 2px solid rgba(255, 255, 255, 0.4);
+        }
+
+        .envelope.open .wax-seal {
+            opacity: 0;
+            transform: translate(-50%, -50%) scale(0.2);
+            pointer-events: none;
+        }
+
+        /* Gold Gradient Text */
+        .gold-gradient-text {
+            background: linear-gradient(135deg, #8C6D2D 0%, #C5A059 40%, #8C6D2D 75%, #A68438 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* Shimmer Effect on Card */
+        .shimmer-card {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .shimmer-card::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -150%;
+            width: 100%;
+            height: 200%;
+            background: linear-gradient(
+                60deg,
+                rgba(255,255,255,0) 20%,
+                rgba(255,255,255,0.5) 50%,
+                rgba(255,255,255,0) 80%
+            );
+            transform: rotate(25deg);
+            pointer-events: none;
+        }
+
+        .shimmer-card.active-shimmer::after {
+            animation: shine 3.5s infinite 1s;
+        }
+
+        @keyframes shine {
+            0% { left: -150%; }
+            35% { left: 150%; }
+            100% { left: 150%; }
+        }
+
+        /* Heartbeat Pulse for Buttons */
+        @keyframes heartbeat {
+            0%, 100% { transform: scale(1); }
+            15% { transform: scale(1.05); }
+            30% { transform: scale(0.97); }
+            45% { transform: scale(1.03); }
+        }
+        .animate-heartbeat {
+            animation: heartbeat 2.4s infinite ease-in-out;
+        }
+
+        /* Soft Modal Entrance */
+        .modal-fade-enter {
+            opacity: 0;
+            transform: scale(0.9) translateY(20px);
+            pointer-events: none;
+        }
+        .modal-fade-active {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+            pointer-events: auto;
+            transition: all 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        /* Glassmorphism Backdrops */
+        .glass-panel {
+            background: rgba(255, 253, 249, 0.92);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center relative">
+
+    <!-- Background Particles Canvas (Flowers, Petals & Floating Hearts) -->
+    <canvas id="bg-canvas"></canvas>
+
+    <!-- Main Container -->
+    <main class="relative z-10 w-full h-full flex flex-col items-center justify-center p-3 sm:p-6 max-w-lg mx-auto">
+
+        <!-- STEP 1: COVER ENVELOPE SCREEN -->
+        <div id="envelope-screen" class="flex flex-col items-center justify-center w-full transition-all duration-700 my-auto">
+            
+            <div class="text-center mb-6 px-4">
+                <span class="inline-block text-xs uppercase tracking-[0.25em] text-[#8C6D2D] font-semibold mb-2 bg-[#F5EAE6]/80 px-3 py-1 rounded-full border border-[#E8D0C5]">
+                    Você recebeu um convite especial
+                </span>
+                <h1 class="font-script text-5xl sm:text-6xl text-[#8C6D2D] drop-shadow-sm mt-1">
+                    Chá da Eliza
+                </h1>
+            </div>
+
+            <!-- Interactive Envelope -->
+            <div class="envelope-wrapper my-2" id="envelope-btn">
+                <div class="envelope" id="envelope-element">
+                    <div class="envelope-flap"></div>
+                    <div class="envelope-pocket"></div>
+                    <div class="wax-seal">
+                        <svg class="w-8 h-8 text-white fill-current drop-shadow-sm" viewBox="0 0 24 24">
+                            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Open Button (Optimized for Mobile Touch) -->
+            <button id="open-btn" class="mt-8 px-8 py-3.5 bg-gradient-to-r from-[#9B7B38] via-[#C5A059] to-[#9B7B38] text-white font-semibold text-base rounded-full shadow-lg shadow-[#9B7B38]/30 active:scale-95 transition-all duration-300 animate-heartbeat flex items-center gap-2 cursor-pointer border border-white/30">
+                <span>Toque para Abrir</span>
+                <svg class="w-5 h-5 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
+                </svg>
+            </button>
+            <p class="text-xs text-[#A2836E] mt-3 font-medium">Toque no envelope ou no botão</p>
+        </div>
+
+        <!-- STEP 2: REVEALED INVITATION CARD (100% Vector HTML/CSS/SVG) -->
+        <div id="card-screen" class="modal-fade-enter fixed inset-0 z-20 flex flex-col items-center justify-between p-3 sm:p-5 overflow-y-auto">
+            
+            <div class="w-full flex-1 flex flex-col items-center justify-center my-auto py-2">
+                
+                <!-- Main Card -->
+                <div id="card-container" class="shimmer-card relative bg-[#FFFDF9] rounded-3xl shadow-2xl border-2 border-[#EFE5D8] w-full max-w-[390px] p-6 sm:p-7 flex flex-col items-center text-center transition-transform duration-300 my-auto">
+                    
+                    <!-- CORNER FLORAL 1: TOP-LEFT -->
+                    <svg class="absolute top-0 left-0 w-32 sm:w-40 h-32 sm:h-40 pointer-events-none rounded-tl-3xl" viewBox="0 0 160 160" fill="none">
+                        <path d="M15 45 C5 15, 35 5, 55 25 C75 45, 35 75, 15 45 Z" fill="#8EA885" opacity="0.6"/>
+                        <path d="M35 75 C15 85, 5 110, 25 120 C45 130, 65 100, 35 75 Z" fill="#6B8E63" opacity="0.5"/>
+                        <circle cx="28" cy="32" r="20" fill="#F7B2BD" opacity="0.8"/>
+                        <circle cx="48" cy="22" r="18" fill="#F49AC2" opacity="0.75"/>
+                        <circle cx="18" cy="52" r="16" fill="#F9C0C9" opacity="0.85"/>
+                        <circle cx="40" cy="45" r="22" fill="#E87EA1" opacity="0.65"/>
+                        <circle cx="32" cy="35" r="9" fill="#C44569" opacity="0.9"/>
+                        <circle cx="78" cy="18" r="5" fill="#E87EA1"/>
+                        <circle cx="88" cy="26" r="3.5" fill="#E87EA1"/>
+                        <path d="M52 22 Q78 18 88 26" stroke="#8EA885" stroke-width="1.5" fill="none"/>
+                    </svg>
+
+                    <!-- CORNER FLORAL 2: TOP-RIGHT -->
+                    <svg class="absolute top-0 right-0 w-32 sm:w-40 h-32 sm:h-40 pointer-events-none rounded-tr-3xl transform scale-x-[-1]" viewBox="0 0 160 160" fill="none">
+                        <path d="M15 45 C5 15, 35 5, 55 25 C75 45, 35 75, 15 45 Z" fill="#8EA885" opacity="0.6"/>
+                        <circle cx="28" cy="32" r="20" fill="#F7B2BD" opacity="0.8"/>
+                        <circle cx="48" cy="22" r="18" fill="#F49AC2" opacity="0.75"/>
+                        <circle cx="32" cy="35" r="9" fill="#C44569" opacity="0.9"/>
+                        <circle cx="78" cy="18" r="5" fill="#E87EA1"/>
+                        <path d="M52 22 Q78 18 88 26" stroke="#8EA885" stroke-width="1.5" fill="none"/>
+                    </svg>
+
+                    <!-- CORNER FLORAL 3: BOTTOM-LEFT -->
+                    <svg class="absolute bottom-0 left-0 w-32 sm:w-40 h-32 sm:h-40 pointer-events-none rounded-bl-3xl transform scale-y-[-1]" viewBox="0 0 160 160" fill="none">
+                        <path d="M15 45 C5 15, 35 5, 55 25 C75 45, 35 75, 15 45 Z" fill="#8EA885" opacity="0.6"/>
+                        <circle cx="28" cy="32" r="20" fill="#F7B2BD" opacity="0.8"/>
+                        <circle cx="48" cy="22" r="18" fill="#F49AC2" opacity="0.75"/>
+                        <circle cx="32" cy="35" r="9" fill="#C44569" opacity="0.9"/>
+                    </svg>
+
+                    <!-- CORNER FLORAL 4: BOTTOM-RIGHT -->
+                    <svg class="absolute bottom-0 right-0 w-36 sm:w-44 h-36 sm:h-44 pointer-events-none rounded-br-3xl" viewBox="0 0 160 160" fill="none">
+                        <path d="M120 110 C140 135, 115 150, 95 135 C75 120, 100 95, 120 110 Z" fill="#8EA885" opacity="0.6"/>
+                        <circle cx="132" cy="128" r="20" fill="#F7B2BD" opacity="0.8"/>
+                        <circle cx="112" cy="138" r="18" fill="#F49AC2" opacity="0.75"/>
+                        <circle cx="140" cy="112" r="16" fill="#F9C0C9" opacity="0.85"/>
+                        <circle cx="122" cy="118" r="22" fill="#E87EA1" opacity="0.65"/>
+                        <circle cx="128" cy="125" r="9" fill="#C44569" opacity="0.9"/>
+                        <circle cx="85" cy="142" r="5" fill="#E87EA1"/>
+                        <path d="M112 138 Q85 142 75 135" stroke="#8EA885" stroke-width="1.5" fill="none"/>
+                    </svg>
+
+                    <!-- FLOATING DECORATIVE HEARTS IN CONTENT -->
+                    <div class="absolute top-12 right-7 text-[#F4A8B6] opacity-70 text-lg animate-pulse">♥</div>
+                    <div class="absolute bottom-16 left-7 text-[#F4A8B6] opacity-60 text-sm animate-pulse" style="animation-delay: 1s;">♥</div>
+
+                    <!-- CARD CONTENT: TITLE -->
+                    <div class="mt-3 mb-1 z-10">
+                        <h2 class="font-serif-title text-2xl sm:text-3xl tracking-[0.25em] font-bold text-[#8C6D2D] uppercase">
+                            CHÁ DA
+                        </h2>
+                    </div>
+
+                    <!-- CARD CONTENT: NAME WITH HEART TAIL & RIBBON -->
+                    <div class="relative my-1 z-10">
+                        <div class="flex items-center justify-center">
+                            <span class="font-script text-6xl sm:text-7xl gold-gradient-text block leading-none py-1 px-2 drop-shadow-sm">
+                                Eliza
+                            </span>
+                            <!-- SVG Flourish Heart Tail attached to Eliza -->
+                            <svg class="w-7 h-7 sm:w-8 sm:h-8 text-[#8C6D2D] fill-none stroke-current -ml-2 -mt-3" viewBox="0 0 24 24" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                            </svg>
+                        </div>
+
+                        <!-- Underline Pink Ribbon Stroke -->
+                        <svg class="w-44 sm:w-52 h-4 mx-auto -mt-2" viewBox="0 0 200 15" fill="none">
+                            <path d="M10 7 C 60 13, 140 13, 190 7" stroke="#F4A8B6" stroke-width="3.5" stroke-linecap="round" opacity="0.85"/>
+                            <path d="M30 10 C 80 14, 120 14, 170 10" stroke="#F9C0C9" stroke-width="1.8" stroke-linecap="round" opacity="0.6"/>
+                        </svg>
+                    </div>
+
+                    <!-- CARD CONTENT: MENSAGEM CENTRAL -->
+                    <div class="my-4 z-10 px-2 sm:px-4">
+                        <p class="text-[#4A3E3D] font-medium text-base sm:text-lg leading-snug sm:leading-normal">
+                            Estou chegando para encher nossa família de amor, alegria e felicidade!
+                        </p>
+                    </div>
+
+                    <!-- CARD CONTENT: DIVIDER WITH HEART -->
+                    <div class="flex items-center justify-center gap-3 my-1.5 z-10 w-full max-w-[180px]">
+                        <div class="h-[1px] bg-gradient-to-r from-transparent to-[#F4A8B6] flex-1"></div>
+                        <span class="text-[#E87EA1] text-base">♥</span>
+                        <div class="h-[1px] bg-gradient-to-l from-transparent to-[#F4A8B6] flex-1"></div>
+                    </div>
+
+                    <!-- CARD CONTENT: FRASE FINAL -->
+                    <div class="mt-2 mb-3 z-10">
+                        <p class="font-script text-3xl sm:text-4xl text-[#8C6D2D]">
+                            Obrigado pela presença
+                        </p>
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!-- BOTTOM ACTION BAR (MOBILE OPTIMIZED) -->
+            <div class="w-full max-w-[390px] z-30 pb-2 px-1 flex flex-col gap-2">
+                
+                <!-- Primary Action Button: RSVP -->
+                <button id="open-rsvp-modal" class="w-full py-3.5 px-5 bg-gradient-to-r from-[#25D366] to-[#1DA851] text-white font-semibold text-sm rounded-2xl shadow-lg shadow-[#25D366]/25 flex items-center justify-center gap-2.5 active:scale-95 transition-transform border border-white/20 cursor-pointer">
+                    <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24">
+                        <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981z"/>
+                    </svg>
+                    <span>Confirmar Presença (RSVP)</span>
+                </button>
+
+                <!-- Secondary Row Buttons -->
+                <div class="grid grid-cols-3 gap-2">
+                    
+                    <!-- Event Details Modal Button -->
+                    <button id="open-info-modal" class="py-2.5 px-3 bg-white/95 hover:bg-white text-[#8C6D2D] font-medium text-xs rounded-xl shadow-md border border-[#EFE5D8] flex items-center justify-center gap-1.5 active:scale-95 transition-transform cursor-pointer">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                        </svg>
+                        <span>Data / Local</span>
+                    </button>
+
+                    <!-- Share Button -->
+                    <button id="share-btn" class="py-2.5 px-3 bg-white/95 hover:bg-white text-[#8C6D2D] font-medium text-xs rounded-xl shadow-md border border-[#EFE5D8] flex items-center justify-center gap-1.5 active:scale-95 transition-transform cursor-pointer">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/>
+                        </svg>
+                        <span>Compartilhar</span>
+                    </button>
+
+                    <!-- Re-open / Sound Toggle -->
+                    <button id="replay-btn" class="py-2.5 px-3 bg-white/95 hover:bg-white text-[#8C6D2D] font-medium text-xs rounded-xl shadow-md border border-[#EFE5D8] flex items-center justify-center gap-1.5 active:scale-95 transition-transform cursor-pointer">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                        </svg>
+                        <span>Rever</span>
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- MODAL 1: RSVP CONFIRMATION -->
+        <div id="rsvp-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm hidden transition-opacity duration-300 opacity-0">
+            <div class="glass-panel w-full max-w-sm rounded-3xl p-6 shadow-2xl border border-white/60 text-center relative flex flex-col gap-4">
+                <button id="close-rsvp-modal" class="absolute top-4 right-4 w-8 h-8 bg-[#F5EAE6] text-[#4A3E3D] rounded-full flex items-center justify-center text-sm font-bold active:scale-90">✕</button>
+                
+                <div class="mx-auto w-12 h-12 bg-[#25D366]/10 text-[#25D366] rounded-full flex items-center justify-center">
+                    <svg class="w-7 h-7 fill-current" viewBox="0 0 24 24">
+                        <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981z"/>
+                    </svg>
+                </div>
+
+                <h3 class="font-serif-title text-2xl font-bold text-[#8C6D2D]">Confirmar Presença</h3>
+                <p class="text-xs text-[#4A3E3D] leading-relaxed">Escolha uma opção para enviar a confirmação de presença diretamente pelo WhatsApp:</p>
+
+                <div class="flex flex-col gap-2.5 my-1">
+                    <a href="https://api.whatsapp.com/send?text=Ol%C3%A1!%20Com%20muito%20carinho,%20confirmo%20minha%20presen%C3%A7a%20no%20Ch%C3%A1%20da%20Eliza!%20%F0%9F%8C%B8%E2%9C%A8" target="_blank" class="py-3 px-4 bg-[#25D366] hover:bg-[#20bd5a] text-white font-medium text-xs rounded-xl flex items-center justify-between shadow-sm active:scale-98">
+                        <span>Confirmar Presença (1 Pessoa)</span>
+                        <span>→</span>
+                    </a>
+                    <a href="https://api.whatsapp.com/send?text=Ol%C3%A1!%20Confirmamos%20a%20presen%C3%A7a%20da%20nossa%20fam%C3%ADlia%20no%20Ch%C3%A1%20da%20Eliza!%20%F0%9F%A9%B7%F0%9F%8C%B8" target="_blank" class="py-3 px-4 bg-[#1DA851] hover:bg-[#188e44] text-white font-medium text-xs rounded-xl flex items-center justify-between shadow-sm active:scale-98">
+                        <span>Confirmar Família</span>
+                        <span>→</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL 2: EVENT DETAILS (DATA, LOCAL & SUGESTÃO) -->
+        <div id="info-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm hidden transition-opacity duration-300 opacity-0">
+            <div class="glass-panel w-full max-w-sm rounded-3xl p-6 shadow-2xl border border-white/60 text-center relative flex flex-col gap-4">
+                <button id="close-info-modal" class="absolute top-4 right-4 w-8 h-8 bg-[#F5EAE6] text-[#4A3E3D] rounded-full flex items-center justify-center text-sm font-bold active:scale-90">✕</button>
+
+                <div class="mx-auto w-12 h-12 bg-[#8C6D2D]/10 text-[#8C6D2D] rounded-full flex items-center justify-center">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    </svg>
+                </div>
+
+                <h3 class="font-serif-title text-2xl font-bold text-[#8C6D2D]">Detalhes do Evento</h3>
+
+                <div class="bg-white/80 rounded-2xl p-4 text-left border border-[#EFE5D8] flex flex-col gap-3 text-xs text-[#4A3E3D]">
+                    <div class="flex items-start gap-3">
+                        <span class="text-base">📅</span>
+                        <div>
+                            <strong class="block text-[#8C6D2D]">Data & Horário</strong>
+                            <span>A definir com os organizadores</span>
+                        </div>
+                    </div>
+                    <div class="flex items-start gap-3">
+                        <span class="text-base">📍</span>
+                        <div>
+                            <strong class="block text-[#8C6D2D]">Local</strong>
+                            <span>Residência da Família</span>
+                        </div>
+                    </div>
+                    <div class="flex items-start gap-3">
+                        <span class="text-base">🎁</span>
+                        <div>
+                            <strong class="block text-[#8C6D2D]">Sugestão de Mimo</strong>
+                            <span>Fraldas Tam. M ou G / Carinho especial</span>
+                        </div>
+                    </div>
+                </div>
+
+                <button id="close-info-btn" class="w-full py-3 bg-[#8C6D2D] text-white font-semibold text-xs rounded-xl shadow-md active:scale-95">
+                    Entendido
+                </button>
+            </div>
+        </div>
+
+        <!-- Toast Notification -->
+        <div id="toast" class="fixed bottom-6 z-50 bg-[#4A3E3D] text-white text-xs px-5 py-2.5 rounded-full shadow-lg transition-all duration-300 opacity-0 transform translate-y-4 pointer-events-none">
+            Link copiado com sucesso!
+        </div>
+
+    </main>
+
+    <script>
+        
+        /* 1. CANVAS FLOATING PETALS & SPARKLES ENGINE */
+        const canvas = document.getElementById('bg-canvas');
+        const ctx = canvas.getContext('2d');
+
+        let width = canvas.width = window.innerWidth;
+        let height = canvas.height = window.innerHeight;
+
+        window.addEventListener('resize', () => {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        });
+
+        class Particle {
+            constructor() {
+                this.reset();
+            }
+
+            reset() {
+                this.x = Math.random() * width;
+                this.y = Math.random() * height - height;
+                this.size = Math.random() * 10 + 6;
+                this.speedY = Math.random() * 1.1 + 0.5;
+                this.speedX = Math.sin(Math.random() * Math.PI) * 0.7;
+                this.rotation = Math.random() * 360;
+                this.rotationSpeed = (Math.random() - 0.5) * 1.2;
+                this.opacity = Math.random() * 0.65 + 0.25;
+                this.type = Math.random() > 0.45 ? 'petal' : (Math.random() > 0.5 ? 'heart' : 'sparkle');
+                this.color = ['#F7B2BD', '#F49AC2', '#F9C0C9', '#E87EA1', '#C5A059'][Math.floor(Math.random() * 5)];
+            }
+
+            update() {
+                this.y += this.speedY;
+                this.x += Math.sin(this.y * 0.008) + this.speedX;
+                this.rotation += this.rotationSpeed;
+
+                if (this.y > height + 20) {
+                    this.reset();
+                    this.y = -20;
+                }
+            }
+
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate((this.rotation * Math.PI) / 180);
+                ctx.globalAlpha = this.opacity;
+                ctx.fillStyle = this.color;
+
+                if (this.type === 'petal') {
+                    // Rose Petal Shape
+                    ctx.beginPath();
+                    ctx.moveTo(0, 0);
+                    ctx.bezierCurveTo(-this.size / 2, -this.size / 2, -this.size, this.size / 3, 0, this.size);
+                    ctx.bezierCurveTo(this.size, this.size / 3, this.size / 2, -this.size / 2, 0, 0);
+                    ctx.fill();
+                } else if (this.type === 'heart') {
+                    // Heart Shape
+                    ctx.beginPath();
+                    const topCurveHeight = this.size * 0.3;
+                    ctx.moveTo(0, topCurveHeight);
+                    ctx.bezierCurveTo(0, 0, -this.size / 2, 0, -this.size / 2, topCurveHeight);
+                    ctx.bezierCurveTo(-this.size / 2, (this.size + topCurveHeight) / 2, 0, this.size, 0, this.size);
+                    ctx.bezierCurveTo(0, this.size, this.size / 2, (this.size + topCurveHeight) / 2, this.size / 2, topCurveHeight);
+                    ctx.bezierCurveTo(this.size / 2, 0, 0, 0, 0, topCurveHeight);
+                    ctx.fill();
+                } else {
+                    // Sparkle Star Shape
+                    ctx.beginPath();
+                    ctx.arc(0, 0, this.size * 0.25, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+
+                ctx.restore();
+            }
+        }
+
+        const particleCount = window.innerWidth < 640 ? 30 : 50;
+        const particles = Array.from({ length: particleCount }, () => new Particle());
+
+        function animateParticles() {
+            ctx.clearRect(0, 0, width, height);
+            particles.forEach(p => {
+                p.update();
+                p.draw();
+            });
+            requestAnimationFrame(animateParticles);
+        }
+        animateParticles();
+
+        /* 2. SYNTHESIZED WEB AUDIO HARP CHIME */
+        let audioCtx = null;
+
+        function playLullabyHarpSound() {
+            try {
+                if (!audioCtx) {
+                    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+
+                // Gentle Lullaby Chime Sequence: C5, E5, G5, B5, C6, E6
+                const notes = [523.25, 659.25, 783.99, 987.77, 1046.50, 1318.51]; 
+                notes.forEach((freq, idx) => {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(freq, audioCtx.currentTime + idx * 0.1);
+
+                    gain.gain.setValueAtTime(0, audioCtx.currentTime + idx * 0.1);
+                    gain.gain.linearRampToValueAtTime(0.12, audioCtx.currentTime + idx * 0.1 + 0.02);
+                    gain.gain.exponentialRampToValueAtTime(0.0005, audioCtx.currentTime + idx * 0.1 + 1.2);
+
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+
+                    osc.start(audioCtx.currentTime + idx * 0.1);
+                    osc.stop(audioCtx.currentTime + idx * 0.1 + 1.25);
+                });
+            } catch (e) {
+                console.log('Audio playback initialized.');
+            }
+        }
+
+        /* 3. INTERACTIVE ENVELOPE OPENING LOGIC */
+        const envelopeBtn = document.getElementById('envelope-btn');
+        const openBtn = document.getElementById('open-btn');
+        const envelopeElement = document.getElementById('envelope-element');
+        const envelopeScreen = document.getElementById('envelope-screen');
+        const cardScreen = document.getElementById('card-screen');
+        const cardContainer = document.getElementById('card-container');
+        const replayBtn = document.getElementById('replay-btn');
+
+        let isOpen = false;
+
+        function triggerOpen(e) {
+            if (e) e.preventDefault();
+            if (isOpen) return;
+            isOpen = true;
+
+            // Audio Effect
+            playLullabyHarpSound();
+
+            // 1. Fold flap back
+            envelopeElement.classList.add('open');
+
+            // 2. Transition screens
+            setTimeout(() => {
+                envelopeScreen.classList.add('opacity-0', 'scale-95');
+                setTimeout(() => {
+                    envelopeScreen.style.display = 'none';
+                    cardScreen.classList.remove('modal-fade-enter');
+                    cardScreen.classList.add('modal-fade-active');
+
+                    // Active shimmer light
+                    setTimeout(() => {
+                        cardContainer.classList.add('active-shimmer');
+                    }, 400);
+                }, 400);
+            }, 550);
+        }
+
+        // Pointerdown for zero-delay response on iOS/Android touchscreen
+        openBtn.addEventListener('pointerdown', triggerOpen);
+        envelopeBtn.addEventListener('pointerdown', triggerOpen);
+
+        // Replay Animation Logic
+        replayBtn.addEventListener('click', () => {
+            isOpen = false;
+            cardScreen.classList.remove('modal-fade-active');
+            cardScreen.classList.add('modal-fade-enter');
+            cardContainer.classList.remove('active-shimmer');
+
+            setTimeout(() => {
+                envelopeScreen.style.display = 'flex';
+                setTimeout(() => {
+                    envelopeScreen.classList.remove('opacity-0', 'scale-95');
+                    envelopeElement.classList.remove('open');
+                }, 50);
+            }, 400);
+        });
+
+        /* 4. MODALS & SHARE INTERACTION */
+        const rsvpModal = document.getElementById('rsvp-modal');
+        const openRsvpBtn = document.getElementById('open-rsvp-modal');
+        const closeRsvpBtn = document.getElementById('close-rsvp-modal');
+
+        const infoModal = document.getElementById('info-modal');
+        const openInfoBtn = document.getElementById('open-info-modal');
+        const closeInfoBtn = document.getElementById('close-info-modal');
+        const closeInfoBtn2 = document.getElementById('close-info-btn');
+
+        const shareBtn = document.getElementById('share-btn');
+        const toast = document.getElementById('toast');
+
+        function toggleModal(modal, show) {
+            if (show) {
+                modal.classList.remove('hidden');
+                setTimeout(() => modal.classList.remove('opacity-0'), 10);
+            } else {
+                modal.classList.add('opacity-0');
+                setTimeout(() => modal.classList.add('hidden'), 300);
+            }
+        }
+
+        openRsvpBtn.addEventListener('click', () => toggleModal(rsvpModal, true));
+        closeRsvpBtn.addEventListener('click', () => toggleModal(rsvpModal, false));
+        rsvpModal.addEventListener('click', (e) => { if (e.target === rsvpModal) toggleModal(rsvpModal, false); });
+
+        openInfoBtn.addEventListener('click', () => toggleModal(infoModal, true));
+        closeInfoBtn.addEventListener('click', () => toggleModal(infoModal, false));
+        closeInfoBtn2.addEventListener('click', () => toggleModal(infoModal, false));
+        infoModal.addEventListener('click', (e) => { if (e.target === infoModal) toggleModal(infoModal, false); });
+
+        // Share Link functionality
+        shareBtn.addEventListener('click', () => {
+            if (navigator.share) {
+                navigator.share({
+                    title: 'Convite - Chá da Eliza',
+                    text: 'Você foi convidado para o Chá da Eliza! Toque no link para abrir o convite:',
+                    url: window.location.href
+                }).catch(() => {});
+            } else {
+                // Clipboard fallback
+                const dummy = document.createElement('input');
+                document.body.appendChild(dummy);
+                dummy.value = window.location.href;
+                dummy.select();
+                document.execCommand('copy');
+                document.body.removeChild(dummy);
+
+                // Show toast
+                toast.classList.remove('opacity-0', 'translate-y-4');
+                toast.classList.add('opacity-100', 'translate-y-0');
+                setTimeout(() => {
+                    toast.classList.add('opacity-0', 'translate-y-4');
+                    toast.classList.remove('opacity-100', 'translate-y-0');
+                }, 2500);
+            }
+        });
+    </script>
+</body>
+</html>
